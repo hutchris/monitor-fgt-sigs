@@ -11,7 +11,7 @@ You will also need to install netmiko to the instance of python that is included
 
 The --upgrade is needed to upgrade the modules that are included in PRTG.
 
-In PRTG you will need to add credentials to the device, the script uses the credentials called CREDENTIALS FOR LINUX/SOLARIS/MAC OS (SSH/WBEM) SYSTEMS. Add can either add unique credentials to each device or add them to a device group and inherit them to the devices. 
+The script uses ssh to log into the device and run "get system status". It scrapes the output and extracts the number of days since the dates stored in the signature strings. It is advisable to use a read only user for this process. In PRTG you will need to add credentials to the device, the script pulls down the CREDENTIALS FOR LINUX/SOLARIS/MAC OS (SSH/WBEM) SYSTEMS. You can either add unique credentials to each device or add them to a device group and inherit them to the devices. 
 
 You should now be able to add a sensor to the fortigate device in PRTG, choose "python script advanced" and pick the script from the drop down. Select "Transmit Linux Credentials"
 
