@@ -12,3 +12,5 @@ You will also need to install netmiko to the instance of python that is included
 In PRTG you will need to add credentials to the device, the script uses the credentials called CREDENTIALS FOR LINUX/SOLARIS/MAC OS (SSH/WBEM) SYSTEMS. Add can either add unique credentials to each device or add them to a device group and inherit them to the devices. 
 
 You should now be able to add a sensor to the fortigate device in PRTG, choose "custom python sensor" and pick the script from the drop down. Select "Transmit Linux Credentials"
+
+Currently only tested on Fortigate 5.2.4
