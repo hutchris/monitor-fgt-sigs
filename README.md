@@ -7,7 +7,9 @@ You will also need to install netmiko to the instance of python that is included
 
 1. Download the get-pip.py file from here: https://pip.pypa.io/en/stable/installing/
 2. Open cmd as admin and run: C:\Program Files (x86)\PRTG Network Monitor\Python34\python.exe C:\<path to file>\get-pip.py
-3. Run: C:\Program Files (x86)\PRTG Network Monitor\Python34\Scripts\pip.exe install netmiko
+3. Run: C:\Program Files (x86)\PRTG Network Monitor\Python34\Scripts\pip.exe install netmiko --upgrade
+
+The --upgrade is needed to upgrade the modules that are included in PRTG.
 
 In PRTG you will need to add credentials to the device, the script uses the credentials called CREDENTIALS FOR LINUX/SOLARIS/MAC OS (SSH/WBEM) SYSTEMS. Add can either add unique credentials to each device or add them to a device group and inherit them to the devices. 
 
