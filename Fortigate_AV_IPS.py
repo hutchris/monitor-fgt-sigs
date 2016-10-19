@@ -33,7 +33,7 @@ if __name__ == "__main__":
 		password = data['linuxloginpassword']
 		host = data['host']
 		username = data['linuxloginusername']
-		device = ConnectHandler(device_type='fortinet',ip=host,username=username,password=password)
+		device = ConnectHandler(device_type='fortinet',ip=host,username=username,password=password,global_delay_factor=2)
 		
 		#send command to fortigate and recieve output
 		output = device.send_command_timing('get system status')
@@ -45,12 +45,13 @@ if __name__ == "__main__":
 		#turn the lines of text pertaining to each UTM into date objects
 		avStrings = ExtractLines(output,AVreg)
 		ipsStrings = ExtractLines(output,IPSreg)
-		count = 2
+		count = 3
 		
-		while (len(avStrings) == 0 or len(ipsStrings) == 0) and count < 10:
+		while (len(avStrings) == 0 or len(ipsStrings) == 0) and count < 20:
 			output = device.send_command_timing('get system status',delay_factor=count)
 			avStrings = ExtractLines(output,AVreg)
 			ipsStrings = ExtractLines(output,IPSreg)
+			time.sleep(1)
 			count += 1
 
 		#turns signature strings into dateobjects
