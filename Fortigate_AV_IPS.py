@@ -85,7 +85,7 @@ if __name__ == "__main__":
 	#catch all other errors and send error string to prtg. Otherwise prtg displays an ugly xml/json parsing error.
 	except Exception as err:
 		sensor = CustomSensorResult("")
-		sensor.add_error(err)
+		sensor.add_error(repr(err))
 	
 	#send the sensor to prtg in json format.
 	print(sensor.get_json_result())
