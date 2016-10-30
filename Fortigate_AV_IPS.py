@@ -24,17 +24,44 @@ def ExtractDates(sigString):
 	return(dateOutput)
 
 if __name__ == "__main__":
-	#try connecting to the device
-	try:
-		#load parameters from prtg
-		data = json.loads(sys.argv[1])
+	#load parameters from prtg
+	data = json.loads(sys.argv[1])
+	
+	#extract key values from parameters
+	password = data['linuxloginpassword']
+	host = data['host']
+	username = data['linuxloginusername']
+	
+	sensor = CustomSensorResult("")
+	connectSuccess = ""
+	connectCount = 1
+	
+	while connectSuccess not in ["success","failure"] and connectCount < 4: 
+		try:
+			#try connecting to the device
+			device = ConnectHandler(device_type='fortinet',ip=host,username=username,password=password,global_delay_factor=connectCount)
+			connectSuccess = "success"
 		
-		#extract key values from parameters
-		password = data['linuxloginpassword']
-		host = data['host']
-		username = data['linuxloginusername']
-		device = ConnectHandler(device_type='fortinet',ip=host,username=username,password=password,global_delay_factor=2)
+		#this catches the ValueError("Unable to find prompt: {}") error that occurs on high latency devices. Increase the delay and try again.
+		except ValueError:
+			connectCount += 1
 		
+		#catch an error for timeout. If device is unreachable or ip address is incorrect.
+		except ssh_exception.NetMikoTimeoutException:
+			sensor.add_error("Device Unresponsive")
+			connectSuccess = "failure"
+			
+		#catch an error of wrong creds, this will occur if the AD account is locked out or pw expired	
+		except ssh_exception.NetMikoAuthenticationException:
+			sensor.add_error("Authentication failure")
+			connectSuccess = "failure"
+			
+		#catch all other errors and send error string to prtg. Otherwise prtg displays an ugly xml/json parsing error.
+		except Exception as err:
+			sensor.add_error(repr(err))	
+			connectSuccess = "failure"
+	
+	if connectSuccess == "success":
 		#send command to fortigate and recieve output
 		output = device.send_command_timing('get system status')
 		
@@ -70,22 +97,8 @@ if __name__ == "__main__":
 		else:
 			sensor = CustomSensorResult()
 			sensor.add_error("Unexpected output: {0}".format(output))
-	
-		device.disconnect()
-	#catch an error for time out. this will occur if device is unreachable or ssh is broken
-	except ssh_exception.NetMikoTimeoutException:
-		sensor = CustomSensorResult("")
-		sensor.add_error("Device Unresponsive")
 		
-	#catch an error of wrong creds, this will occur if the AD account is locked out or pw expired	
-	except ssh_exception.NetMikoAuthenticationException:
-		sensor = CustomSensorResult("")
-		sensor.add_error("Authentication failure")
-	
-	#catch all other errors and send error string to prtg. Otherwise prtg displays an ugly xml/json parsing error.
-	except Exception as err:
-		sensor = CustomSensorResult("")
-		sensor.add_error(repr(err))
-	
+		device.disconnect()
+
 	#send the sensor to prtg in json format.
 	print(sensor.get_json_result())
