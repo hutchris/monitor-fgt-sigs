@@ -80,22 +80,45 @@ if __name__ == "__main__":
 			ipsStrings = ExtractLines(output,IPSreg)
 			time.sleep(1)
 			count += 1
-
+		
 		#turns signature strings into dateobjects
 		ipsOutput = ExtractDates(ipsStrings)
 		avOutput = ExtractDates(avStrings)
 		
+		if device.vdoms:
+			vdoms = device.send_command_timing('config global')
+		output2 = device.send_command_timing('diagnose autoupdate versions')
+		
+		EXPreg = re.compile(r"Contract Expiry Date:")
+		expStrings = ExtractLines(output2,EXPreg)
+		expString = expStrings[8]
+		
+		if expString.upper().find("N/A") != -1:
+			update = device.send_command_timing("execute update-now")
+			time.sleep(30)
+			
+		count = 3
+		
+		while (len(expString) == 0 or expString.upper().find("N/A") != -1) and count < 5:
+			output2 = device.send_command_timing('diagnose autoupdate versions',delay_factor=count)
+			expStrings = ExtractLines(output2,EXPreg)
+			expString = expStrings[8]
+			time.sleep(1)
+			count += 1
+		
+		deviceContract = expString[expString.index(":")+2:]
+		daysUntilExpiry = (datetime.strptime(deviceContract,"%a %b %d %Y") - datetime.now()).days
+			
 		#if the ssh session return the type of strings that we are looking for then the Output lists will have a length > 0.
 		#In this case, build the prtg sensor and add the channels. Otherwise put the unexpected result in an error for debugging.
 		if len(avOutput) > 0 and len(ipsOutput) > 0:
 			now = datetime.now()
 			daysWithoutIPS = str(max(0,(now - max(ipsOutput)).days))
 			daysWithoutAV = str(max(0,(now - max(avOutput)).days))
-			sensor = CustomSensorResult("OK")
-			sensor.add_channel(channel_name="Days since AV update",unit="Days",value=daysWithoutAV)
-			sensor.add_channel(channel_name="Days since IPS update",unit="Days",value=daysWithoutIPS)
+			sensor.add_channel(channel_name="Days since AV update",unit="Days",value=daysWithoutAV,is_limit_mode=True,limit_max_warning=2,limit_max_error=14)
+			sensor.add_channel(channel_name="Days since IPS update",unit="Days",value=daysWithoutIPS,is_limit_mode=True,limit_max_warning=2,limit_max_error=14)
+			sensor.add_channel(channel_name="Days until contract expires",unit="Days",value=daysUntilExpiry,is_limit_mode=True,limit_min_warning=90,limit_min_error=7,primary_channel=True)
 		else:
-			sensor = CustomSensorResult()
 			sensor.add_error("Unexpected output: {0}".format(output))
 		
 		device.disconnect()
